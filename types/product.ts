@@ -7,6 +7,7 @@ export interface Product {
 	deliveryPrice: number;
 	deliveryInDays: number;
 	isAmazonChoice: boolean;
+	sku?: string;
 	imageUrl?: string | null;
 	model3DUrl?: string | null;
 }

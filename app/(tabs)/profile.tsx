@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { router, useNavigation } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import { router, useFocusEffect, useNavigation } from "expo-router";
 import {
 	Pressable,
 	ScrollView,
@@ -17,6 +17,8 @@ import { useAuth } from "@/context/AuthProvider";
 import { ProfileUnauthedBanner } from "@/components/Screens/profile/ProfileUnauthedBanner";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRef } from "react";
+import { getMyOrders } from "@/utils/orders";
+import { getWishlist } from "@/utils/customerProfile";
 
 const COLORS = {
 	primary: "#D97706",
@@ -36,32 +38,34 @@ const COLORS = {
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
-const MENU_SECTIONS = [
-	{
-		title: "Account",
-		items: [
-			{ icon: "person-outline", label: "Personal Information", badge: null },
-			{ icon: "location-outline", label: "Saved Addresses", badge: null },
-			{ icon: "card-outline", label: "Payment Methods", badge: null },
-		],
-	},
-	{
-		title: "Orders",
-		items: [
-			{ icon: "cube-outline", label: "My Orders", badge: "3" },
-			{ icon: "heart-outline", label: "Wishlist", badge: null },
-			{ icon: "refresh-outline", label: "Returns & Refunds", badge: null },
-		],
-	},
-	{
-		title: "Preferences",
-		items: [
-			{ icon: "notifications-outline", label: "Notifications", badge: null },
-			{ icon: "settings-outline", label: "Settings", badge: null },
-			{ icon: "help-circle-outline", label: "Help & Support", badge: null },
-		],
-	},
-];
+function getMenuSections(orderCount: number, wishlistCount: number) {
+	return [
+		{
+			title: "Account",
+			items: [
+				{ icon: "person-outline", label: "Personal Information", badge: null },
+				{ icon: "location-outline", label: "Saved Addresses", badge: null },
+				{ icon: "card-outline", label: "Payment Methods", badge: null },
+			],
+		},
+		{
+			title: "Orders",
+			items: [
+				{ icon: "cube-outline", label: "My Orders", badge: orderCount > 0 ? String(orderCount) : null },
+				{ icon: "heart-outline", label: "Wishlist", badge: wishlistCount > 0 ? String(wishlistCount) : null },
+				{ icon: "refresh-outline", label: "Returns & Refunds", badge: null },
+			],
+		},
+		{
+			title: "Preferences",
+			items: [
+				{ icon: "notifications-outline", label: "Notifications", badge: null },
+				{ icon: "settings-outline", label: "Settings", badge: null },
+				{ icon: "help-circle-outline", label: "Help & Support", badge: null },
+			],
+		},
+	];
+}
 
 function ProfileMenuItem({
 	icon,
@@ -203,6 +207,8 @@ export default function Profile() {
 	const navigation = useNavigation();
 	const insets = useSafeAreaInsets();
 	const [sheetOpen, setSheetOpen] = useState(false);
+	const [orderCount, setOrderCount] = useState(0);
+	const [wishlistCount, setWishlistCount] = useState(0);
 
 	useEffect(() => {
 		navigation.setOptions({ headerShown: false });
@@ -218,6 +224,64 @@ export default function Profile() {
 	const initials = session?.user?.username
 		? session.user.username.charAt(0).toUpperCase()
 		: session?.user?.email?.charAt(0).toUpperCase() ?? "K";
+
+	const menuSections = getMenuSections(orderCount, wishlistCount);
+
+	const loadStats = useCallback(async () => {
+		if (!session?.token) {
+			setOrderCount(0);
+			setWishlistCount(0);
+			return;
+		}
+
+		const [orders, wishlist] = await Promise.all([
+			getMyOrders(session.token),
+			getWishlist(),
+		]);
+
+		setOrderCount(orders.length);
+		setWishlistCount(wishlist.length);
+	}, [session?.token]);
+
+	useFocusEffect(
+		useCallback(() => {
+			void loadStats();
+		}, [loadStats])
+	);
+
+	const navigateFromLabel = (label: string) => {
+		switch (label) {
+			case "Personal Information":
+				router.push("/profile/personal-information");
+				break;
+			case "Saved Addresses":
+				router.push("/profile/addresses");
+				break;
+			case "Payment Methods":
+				router.push("/profile/payment-methods");
+				break;
+			case "My Orders":
+				router.push("/orders");
+				break;
+			case "Wishlist":
+				router.push("/profile/wishlist");
+				break;
+			case "Returns & Refunds":
+				router.push("/profile/returns");
+				break;
+			case "Notifications":
+				router.push("/profile/notifications");
+				break;
+			case "Settings":
+				router.push("/profile/settings");
+				break;
+			case "Help & Support":
+				router.push("/profile/help-support");
+				break;
+			default:
+				break;
+		}
+	};
 
 	return (
 		<View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -236,7 +300,7 @@ export default function Profile() {
 						Profile
 					</Text>
 
-					<Pressable style={styles.headerIconBtn} hitSlop={6}>
+					<Pressable style={styles.headerIconBtn} hitSlop={6} onPress={() => router.push("/profile/settings")}>
 						<Icon name="settings-outline" size={20} color={COLORS.textDark} />
 					</Pressable>
 				</XStack>
@@ -286,9 +350,9 @@ export default function Profile() {
 							{/* Quick stats row */}
 							<XStack mt={20} gap={0}>
 								{[
-									{ label: "Orders", value: "12" },
-									{ label: "Wishlist", value: "5" },
-									{ label: "Reviews", value: "3" },
+									{ label: "Orders", value: String(orderCount) },
+									{ label: "Wishlist", value: String(wishlistCount) },
+									{ label: "Reviews", value: "0" },
 								].map((stat, i, arr) => (
 									<YStack
 										key={stat.label}
@@ -305,7 +369,7 @@ export default function Profile() {
 						</LinearGradient>
 
 						{/* ── Menu sections ── */}
-						{MENU_SECTIONS.map((section) => (
+						{menuSections.map((section) => (
 							<YStack key={section.title} px={20} mt={24}>
 								<Text
 									fos={11}
@@ -325,6 +389,7 @@ export default function Profile() {
 												icon={item.icon}
 												label={item.label}
 												badge={item.badge}
+												onPress={() => navigateFromLabel(item.label)}
 											/>
 											{i < section.items.length - 1 && (
 												<View style={styles.menuItemDivider} />

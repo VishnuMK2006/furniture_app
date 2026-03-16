@@ -12,9 +12,9 @@ import { Image } from "tamagui";
 import { useEffect, useRef, useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 
-import IMG_AD_1 from "@/assets/home-ad-1.png";
-import IMG_AD_2 from "@/assets/home-ad-2.png";
-import IMG_AD_3 from "@/assets/home-ad-3.png";
+import IMG_AD_1 from "@/assets/p1.png";
+import IMG_AD_2 from "@/assets/p2.png";
+import IMG_AD_3 from "@/assets/p3.png";
 
 const images = [IMG_AD_1, IMG_AD_2, IMG_AD_3];
 const { width } = Dimensions.get("window");

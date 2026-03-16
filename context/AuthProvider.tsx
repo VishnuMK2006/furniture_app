@@ -25,7 +25,7 @@ interface LocalSession {
 interface AuthContextType {
 	session: LocalSession | null;
 	isLoading: boolean;
-	login: (email: string, password: string) => Promise<boolean>;
+	login: (email: string, password: string, options?: { requireRole?: string }) => Promise<boolean>;
 	signup: (username: string, email: string, password: string, role?: string) => Promise<boolean>;
 	logout: () => Promise<void>;
 }
@@ -75,7 +75,11 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
 		}
 	}, [session, isLoading, segments]);
 
-	const login = async (email: string, password: string): Promise<boolean> => {
+	const login = async (
+		email: string,
+		password: string,
+		options?: { requireRole?: string }
+	): Promise<boolean> => {
 		try {
 			const res = await fetch(endpoints.login, {
 				method: "POST",
@@ -86,6 +90,11 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
 			const data = await res.json();
 			if (!res.ok) {
 				Alert.alert("Login Failed", data.message || "Invalid credentials");
+				return false;
+			}
+
+			if (options?.requireRole && data?.user?.role !== options.requireRole) {
+				Alert.alert("Access Denied", `This account is not a ${options.requireRole} account.`);
 				return false;
 			}
 

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
+import { View } from "react-native";
 import {
 	Viro3DObject,
 	ViroAmbientLight,
@@ -13,11 +14,7 @@ import {
 import FloatingBackButton from "@/components/Shared/FloatingBackButton";
 import { Viro3DPoint } from "@reactvision/react-viro/dist/components/Types/ViroUtils";
 import { Text } from "tamagui";
-
-const MODEL_SOURCES: Record<string, any> = {
-	"ps5.glb": require("../../assets/products/ps5.glb"),
-	"chair.glb": require("../../assets/products/chair.glb"),
-};
+import { downloadAndCacheModel, getCachedModelPath } from "@/utils/modelCache";
 
 ViroMaterials.createMaterials({
 	QuadMaterial: {
@@ -26,7 +23,9 @@ ViroMaterials.createMaterials({
 	},
 });
 
-function Scene({ source }: { source: any }) {
+function Scene(props: any) {
+	const source = props?.sceneNavigator?.viroAppProps?.source;
+
 	const [position, setPosition] = useState<Viro3DPoint | null>(null);
 
 	return (
@@ -42,6 +41,7 @@ function Scene({ source }: { source: any }) {
 					dragType="FixedToWorld"
 					onDrag={() => {}}
 				/>
+
 				<ViroQuad
 					visible={!position}
 					position={[0, 0, 0]}
@@ -61,19 +61,107 @@ function Scene({ source }: { source: any }) {
 }
 
 export default function ProductARScreen() {
-	const { modelUrl } = useLocalSearchParams<{ modelUrl?: string }>();
+	const { modelUrl, productId } = useLocalSearchParams<{
+		modelUrl?: string;
+		productId?: string;
+	}>();
 
-	const modelSource = modelUrl ? MODEL_SOURCES[modelUrl] : null;
+	const [modelSource, setModelSource] = useState<any>(null);
+	const [isPreparing, setIsPreparing] = useState(true);
+	const [statusMessage, setStatusMessage] = useState("Preparing AR model...");
+	const [downloadProgress, setDownloadProgress] = useState(0);
+	const initialScene = useMemo(() => ({ scene: Scene as any }), []);
+
+	useEffect(() => {
+		let isMounted = true;
+
+		async function prepareModel() {
+			if (!modelUrl || !productId) {
+				if (isMounted) {
+					setStatusMessage("No model available for AR view");
+					setIsPreparing(false);
+				}
+				return;
+			}
+
+			try {
+				if (isMounted) {
+					setIsPreparing(true);
+					setStatusMessage("Checking cached model...");
+					setDownloadProgress(0);
+				}
+
+				const cachedPath = await getCachedModelPath(String(productId));
+				if (cachedPath) {
+					if (isMounted) {
+						setModelSource({ uri: cachedPath });
+						setStatusMessage("Loaded from cache");
+					}
+					return;
+				}
+
+				let lastPercent = -1;
+				const localUri = await downloadAndCacheModel({
+					productId: String(productId),
+					modelUrl: decodeURIComponent(String(modelUrl)),
+					onProgress: (value) => {
+						if (!isMounted) return;
+						const bounded = Math.max(0, Math.min(1, value));
+						const percent = Math.round(bounded * 100);
+						if (percent !== lastPercent) {
+							lastPercent = percent;
+							setDownloadProgress(bounded);
+							setStatusMessage(`Downloading model... ${percent}%`);
+						}
+					},
+				});
+
+				if (isMounted) {
+					setModelSource({ uri: localUri });
+					setStatusMessage("Model ready");
+				}
+			} catch {
+				if (isMounted) {
+					setStatusMessage("Failed to load model");
+				}
+			} finally {
+				if (isMounted) {
+					setIsPreparing(false);
+				}
+			}
+		}
+
+		prepareModel();
+
+		return () => {
+			isMounted = false;
+		};
+	}, [modelUrl, productId]);
 
 	return (
 		<>
 			<FloatingBackButton onPress={router.back} />
 			{modelSource ? (
-				<ViroARSceneNavigator
-					initialScene={{ scene: () => <Scene source={modelSource} /> }}
-				/>
+				<ViroARSceneNavigator initialScene={initialScene} viroAppProps={{ source: modelSource }} />
 			) : (
-				<Text>No model available for AR view</Text>
+				!isPreparing && <Text>{statusMessage}</Text>
+			)}
+
+			{isPreparing && (
+				<View
+					style={{
+						position: "absolute",
+						bottom: 96,
+						alignSelf: "center",
+						backgroundColor: "rgba(255,255,255,0.92)",
+						paddingHorizontal: 14,
+						paddingVertical: 10,
+						borderRadius: 12,
+					}}
+				>
+					<Text>{statusMessage}</Text>
+					<Text>{Math.round(downloadProgress * 100)}%</Text>
+				</View>
 			)}
 		</>
 	);

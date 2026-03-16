@@ -3,7 +3,6 @@ import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import { Product } from "@/types/product";
 import { useCart } from "@/context/CartProvider";
 import { Button, Image, Text, XStack, YStack } from "tamagui";
-import PRIME from "@/assets/prime-label.png";
 import { deliveryDate } from "@/utils/date";
 
 interface Props {
@@ -28,15 +27,17 @@ export default function ProductCart({ product, quantity }: Props) {
 					p={10}
 				/>
 				<YStack w="65%" p={20} gap={10}>
-					<Text numberOfLines={4} ellipsizeMode="tail">
+					<Text numberOfLines={4} ellipsizeMode="tail" color="#0F172A">
 						{product.name}
 					</Text>
-					<Text fos={24}>₹{product.currentPrice}</Text>
+					<Text fos={24} color="#0F172A">₹{product.currentPrice}</Text>
 					{product.isAmazonChoice && (
-						<Image source={PRIME} h={30} w={70} />
+						<Text bg="#111827" color="white" px={8} py={4} br={6} fos={11} fow="700" style={{ alignSelf: "flex-start" }}>
+							Prime
+						</Text>
 					)}
 					<XStack>
-						<Text>
+						<Text color="#0F172A">
 							{product.deliveryPrice === 0
 								? "FREE"
 								: `₹${product.deliveryPrice}`}
@@ -64,6 +65,7 @@ export default function ProductCart({ product, quantity }: Props) {
 					bw={1}
 					bc={"$gray8Light"}
 					bg={"white"}
+					color="#0F172A"
 					onPress={() => removeItem(product)}
 				>
 					Delete

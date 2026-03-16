@@ -4,6 +4,7 @@ import { Text, XStack, YStack, Input, Button, Image } from 'tamagui';
 import { useNavigation, router } from 'expo-router';
 import Icon from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@/context/AuthProvider';
 
 const COLORS = {
 	primary: "#d97706",
@@ -17,15 +18,30 @@ const COLORS = {
 export default function AdminLogin() {
 	const navigation = useNavigation();
 	const insets = useSafeAreaInsets();
+	const { login } = useAuth();
 	
 	const [email, setEmail] = useState('admin@kishore.com');
 	const [password, setPassword] = useState('password123');
 	const [showPassword, setShowPassword] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
 
-	const handleLogin = () => {
-		Alert.alert("Admin Access", "Verifying credentials...");
-		// Fake verification to proceed to dashboard
-		setTimeout(() => router.replace("/(tabs)/admin"), 1000);
+	const handleLogin = async () => {
+		if (!email || !password) {
+			Alert.alert("Missing Fields", "Please enter email and password.");
+			return;
+		}
+
+		setIsLoading(true);
+		try {
+			const success = await login(email, password, { requireRole: 'admin' });
+			if (success) {
+				router.replace('/(tabs)/admin');
+			}
+		} catch (error) {
+			Alert.alert('Error', 'Could not connect to server.');
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	return (
@@ -107,11 +123,12 @@ export default function AdminLogin() {
 					br={8} 
 					bg={COLORS.primary} 
 					color="white" 
+					disabled={isLoading}
 					onPress={handleLogin}
 				>
 					<XStack ai="center" gap={10}>
 						<Icon name="shield-checkmark" size={20} color="white" />
-						<Text color="white" fow="700" fos={16}>Log In as Administrator</Text>
+						<Text color="white" fow="700" fos={16}>{isLoading ? 'Verifying...' : 'Log In as Administrator'}</Text>
 					</XStack>
 				</Button>
 

@@ -17,6 +17,7 @@ interface CartContextType {
 	subTotal: number;
 	addItem: (product: Product, quantity?: number) => void;
 	removeItem: (product: Product, quantity?: number) => void;
+	clearCart: () => void;
 }
 
 const CartContext = createContext({} as CartContextType);
@@ -85,6 +86,7 @@ export const CartProvider = ({ children }: PropsWithChildren) => {
 				subTotal,
 				addItem,
 				removeItem,
+				clearCart: () => setItems([]),
 			}}
 		>
 			{children}

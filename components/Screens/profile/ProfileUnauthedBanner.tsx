@@ -3,15 +3,15 @@ import { Image, Text, XStack, YStack } from "tamagui";
 
 const items = {
 	box: {
-		icon: require("@/assets/box.png"),
+		icon: require("@/assets/icon.png"),
 		text: "Check order status and track, change or return items.",
 	},
 	bag: {
-		icon: require("@/assets/bag.png"),
+		icon: require("@/assets/icon.png"),
 		text: "Shop past purchases and everyday essentials",
 	},
 	receipt: {
-		icon: require("@/assets/receipt.png"),
+		icon: require("@/assets/icon.png"),
 		text: "Create lists with items you want now or later",
 	},
 };
@@ -19,8 +19,8 @@ const items = {
 export function ProfileUnauthedBanner() {
 	return (
 		<YStack mx={24} gap={60} ai={"flex-start"}>
-			{Object.entries(items).map(([_, { icon, text }]) => (
-				<XStack key={icon} jc={"flex-start"} ai={"center"} gap={10}>
+			{Object.entries(items).map(([itemKey, { icon, text }]) => (
+				<XStack key={itemKey} jc={"flex-start"} ai={"center"} gap={10}>
 					<Image source={icon} w={60} h={60} />
 					<Text
 						fos={20}

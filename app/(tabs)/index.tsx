@@ -11,7 +11,7 @@ import {
 	TextInput,
 	TouchableWithoutFeedback,
 } from "react-native";
-import { Text, XStack, YStack } from "tamagui";
+import { Image, Text, XStack, YStack } from "tamagui";
 import Icon from "@expo/vector-icons/Ionicons";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -209,7 +209,7 @@ export default function Home() {
 						</Pressable>
 
 						<XStack ai="center" gap={7}>
-							<MCIcon name="sofa" size={22} color={COLORS.primary} />
+							<Image source={require("@/assets/icon.png")} w={26} h={26} borderRadius={6} />
 							<Text fos={18} fow="900" color={COLORS.textDark} letterSpacing={2.5}>
 								KISHORE
 							</Text>

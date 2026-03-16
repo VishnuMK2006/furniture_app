@@ -17,6 +17,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Product } from "@/types/product";
 import { getProductById } from "@/utils/products";
 import { useCart } from "@/context/CartProvider";
+import {
+	isInWishlist,
+	removeWishlistItem,
+	upsertWishlistItem,
+} from "@/utils/customerProfile";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const IMAGE_HEIGHT = SCREEN_HEIGHT * 0.46;
@@ -70,7 +75,11 @@ export default function ProductDetails() {
 		navigation.setOptions({ headerShown: false });
 		if (id) {
 			setProduct(null);
-			getProductById(id as any).then((p) => p && setProduct(p));
+			getProductById(id as any).then(async (p) => {
+				if (!p) return;
+				setProduct(p);
+				setIsFavorite(await isInWishlist(String(p.id)));
+			});
 		}
 	}, [id, navigation]);
 
@@ -95,8 +104,22 @@ export default function ProductDetails() {
 		  )
 		: null;
 
-	const handleFavorite = () => {
-		setIsFavorite((p) => !p);
+	const handleFavorite = async () => {
+		if (!product) return;
+
+		if (isFavorite) {
+			await removeWishlistItem(String(product.id));
+			setIsFavorite(false);
+		} else {
+			await upsertWishlistItem({
+				productId: String(product.id),
+				name: product.name,
+				imageUrl: product.imageUrl,
+				currentPrice: product.currentPrice,
+			});
+			setIsFavorite(true);
+		}
+
 		Animated.sequence([
 			Animated.spring(heartScale, { toValue: 1.4, useNativeDriver: true, speed: 40, bounciness: 14 }),
 			Animated.spring(heartScale, { toValue: 1, useNativeDriver: true, speed: 30, bounciness: 8 }),
@@ -172,7 +195,7 @@ export default function ProductDetails() {
 								onPress={() =>
 									router.push({
 										pathname: "/product/AR",
-										params: { modelUrl: product.model3DUrl },
+										params: { modelUrl: product.model3DUrl, productId: String(product.id) },
 									})
 								}
 							>

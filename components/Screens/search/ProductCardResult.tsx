@@ -1,7 +1,6 @@
 import { Product } from "@/types/product";
 import { Pressable, TouchableOpacity } from "react-native";
 import { Button, Image, Text, XStack, YStack } from "tamagui";
-import PRIME from "@/assets/prime-label.png";
 import { deliveryDate } from "@/utils/date";
 import { DefaultButton } from "@/components/Shared/DefaultButton";
 import { useCart } from "@/context/CartProvider";
@@ -33,7 +32,9 @@ export function ProductCardResult({ product, onPress }: Props) {
 					</Text>
 					<Text fos={24}>₹{product.currentPrice}</Text>
 					{product.isAmazonChoice && (
-						<Image source={PRIME} h={30} w={70} />
+						<Text bg="#111827" color="white" px={8} py={4} br={6} fos={11} fow="700" self="flex-start">
+							Prime
+						</Text>
 					)}
 					<XStack>
 						<Text>

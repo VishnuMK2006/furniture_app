@@ -1,9 +1,9 @@
 import { Dimensions } from "react-native";
 import { Image, ScrollView, Text, YStack } from "tamagui";
 
-import IMG_AD_1 from "@/assets/home-sugg-1.png";
-import IMG_AD_2 from "@/assets/home-sugg-2.png";
-import IMG_AD_3 from "@/assets/home-sugg-1.png";
+import IMG_AD_1 from "@/assets/p1.png";
+import IMG_AD_2 from "@/assets/p2.png";
+import IMG_AD_3 from "@/assets/p3.png";
 
 const images = [IMG_AD_1, IMG_AD_2, IMG_AD_3];
 
@@ -32,7 +32,7 @@ export function HomeSuggestions() {
 							New Arrivals
 						</Text>
 						<Image
-							source={{ uri: image }}
+							source={image}
 							w="100%"
 							h={150}
 							bbrr={4}
